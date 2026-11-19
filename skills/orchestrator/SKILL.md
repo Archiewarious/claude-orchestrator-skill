@@ -47,6 +47,13 @@ conversations: HQ keeps state in a file, each sub-session does one task.
    owner sees it · scenarios "as <who> I want …, so that …" · implementation decisions (no file paths
    — they go stale) · what we verify (external behaviour only; checkpoints agreed up front) · out of
    scope. This is also the "done when" for briefs and acceptance.
+   **Architecture for EVERY task except trivial ones** (text, color, one line). Before the briefs,
+   one picture of the wave: where each change lives, one source of truth for each number, the
+   interfaces between tasks. Then every executor sends HQ an architecture card before coding (§4);
+   HQ checks it against the owner's words. The best solution fixes the cause, not the symptom ·
+   changes the source instead of adding a second copy · reuses what exists · has the fewest moving
+   parts · fits the existing architecture. Big or risky tasks also get a plan subagent and the
+   red-team reviewer (§6).
    **Fresh-eyes check:** a read-only subagent reads the task description and lists what it would
    have to guess; each guess becomes a question to the owner or a recorded decision
    ([obra/superpowers](https://github.com/obra/superpowers), brainstorming).
@@ -141,8 +148,9 @@ Task: <goal in the owner's words>. Done when: <an end state you can check>.
 Owner's words: "…" (date) — verbatim, only those about this task; HQ's paraphrase next to them.
 Model and effort of this session: <…>, because <two words>.
 Your files: <dirs/files>. Out of scope: <…>. Don't edit others' files — if needed, write to HQ.
-Before coding: change card (how it works now · why · who depends on it · edge cases · plan) — send
-to HQ and wait for "yes".   ← only when there is a design choice
+Before coding: architecture card — how it works now (file:lines) · why it is that way · who depends
+on it · edge cases · 2–3 options with pros and cons · the chosen one and why · where each number
+lives. Send it to HQ and wait for "yes".        ← always, except text, color, one line
 Don't add features, tests, files, docs or refactoring beyond the task — mention them at the end.
 Work until everything is done; ask only when you can't continue without the owner or before a risky step.
 Acceptance check (set by HQ; don't change it, your own tests go on top): <test / number on screen
