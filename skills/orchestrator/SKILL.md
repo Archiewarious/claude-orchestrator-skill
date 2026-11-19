@@ -23,6 +23,8 @@ conversations: HQ keeps state in a file, each sub-session does one task.
 - Every owner message is one of four kinds: **thought** (answer with a thought, launch nothing) ·
   **question** · **decision** (write it to the HQ file verbatim, right away) · **command**.
   Command = "go", "start", "do it", "ship it to work". Everything else is discussion.
+- **"Didn't get it" / "simpler"** → retell your last message in plainer words, adding nothing new
+  ("wait-what", mattpocock/skills).
 - Ask only about *what* (goal, who will see it, what must not break, a real-life example). *How* is
   HQ's call.
 - **Questions as a decision tree** (the "grilling" method, [mattpocock/skills](https://github.com/mattpocock/skills)):
@@ -45,8 +47,11 @@ conversations: HQ keeps state in a file, each sub-session does one task.
    owner sees it · scenarios "as <who> I want …, so that …" · implementation decisions (no file paths
    — they go stale) · what we verify (external behaviour only; checkpoints agreed up front) · out of
    scope. This is also the "done when" for briefs and acceptance.
+   **Fresh-eyes check:** a read-only subagent reads the task description and lists what it would
+   have to guess; each guess becomes a question to the owner or a recorded decision
+   ([obra/superpowers](https://github.com/obra/superpowers), brainstorming).
 4. **Retell before launch** — 3–5 points "what changes", 1–2 examples "if X — you'll see Y", one
-   line "what will NOT happen", model and effort of each part, cost in tokens and time. Give an
+   line "what will NOT happen", decisions HQ made on its own (what · why · what it costs if wrong), model and effort of each part, cost in tokens and time. Give an
    example, not "did I get it right?": a non-technical owner answers an example on substance. This
    is the main guard against "built something other than what was asked" — a code reviewer won't
    catch it, because it compares code to the brief, not to the owner's intent.
@@ -68,6 +73,10 @@ conversations: HQ keeps state in a file, each sub-session does one task.
 - Shared sequence numbers (migration numbers etc.) are handed out by HQ up front, after `fetch` and
   a check against what is already applied.
 - Paths listed as off-limits in the config never go into a brief as writable.
+- **Ownership by concrete files, not globs** (`components/**` means overlap). Before launch, list
+  every pair of tasks that shares a file or an interface; a pair → merge them or run them in sequence.
+- **Shared resources, not only files:** worktrees isolate tracked files, not ports, databases,
+  staging environments or generated files. The brief says who owns each.
 
 ## 3. Model and effort — HQ picks
 
@@ -122,14 +131,18 @@ Before coding: change card (how it works now · why · who depends on it · edge
 to HQ and wait for "yes".   ← only when there is a design choice
 Don't add features, tests, files, docs or refactoring beyond the task — mention them at the end.
 Work until everything is done; ask only when you can't continue without the owner or before a risky step.
-Check: <test / number on screen vs request / page>. Proof = command output with its exit code
-(read from a file, not from `| tail`, which always exits 0).
+Acceptance check (set by HQ; don't change it, your own tests go on top): <test / number on screen
+vs request / page>. Proof = command output with its exit code (read from a file, not from `| tail`,
+which always exits 0).
+Forbidden paths: <…>; at most <N> files in the diff. Shared resources (ports, DB, staging, generated files): <who owns what>.
 Edge cases and traps found here: <…>
 Subagents — only read-only ones, with model from HQ's table. Don't propose new sessions: need help — write to HQ.
 You don't: push, merge, run the pre-push review (the collector does), archive, touch other worktrees.
 Question or blocker: ONE message to HQ, then stop. Budget: <tokens; paid API calls; time>.
-End: commit to your branch with a body (what · why · how verified · what NOT verified); first line of
-the summary — DONE / BLOCKED / NEEDS DECISION + branch + hash (HQ may receive only the first few hundred chars).
+End: commit to your branch with a body (what · why · how verified · what NOT verified · decisions you
+made where the brief was silent, and the alternative you rejected); first line of the summary —
+DONE / DONE WITH CONCERNS / BLOCKED / NEEDS DECISION + branch + hash (HQ may receive only the first
+few hundred chars).
 Stop your dev servers and any background processes you started.
 ```
 
@@ -162,6 +175,11 @@ Stop your dev servers and any background processes you started.
 | 5. Red-team plan reviewer | skeptic subagent | BEFORE code for money, data, migrations, architecture; gets the goal and constraints without the author's reasoning; lists risks itself first, then compares with the plan |
 | 6. Live and owner | end-to-end on the live/staging site, net-zero (undo what you create); owner on screen | after deploy; the owner is the final acceptor |
 
+**Skeptic brief:** "the code may be clean; don't manufacture findings". The first reviewer gets the
+raw diff and the goal without HQ's conclusions; a re-check gets the finding plus the fix claim
+([hyperskills](https://github.com/hyperb1iss/hyperskills), orchestrate). **Every check's verdict** is
+PASS / FAIL / INCOMPLETE plus the commit hash; incomplete is not a pass.
+
 Why one skeptic: a reviewer told to look for problems "will always find something", and fixing
 everything adds needless layers ([Claude Code best practices](https://code.claude.com/docs/en/best-practices)).
 The largest gain came from a second model by a DIFFERENT vendor (coverage 33.6 → 57.1 % on 154
@@ -187,6 +205,8 @@ owner, not from another copy of the same model.
 - An executor's note and summary are a claim, not proof (Anthropic observed a model's closing PR
   summary "often left out small changes" and advises reviewing the diff —
   [source](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-2#say-who-owns-the-code)).
+  No first line in the brief's format, or no hash → not accepted. Check the executor's "decisions
+  where the brief was silent" against the owner's verbatim words first.
   Yourself: `git log -1 --format=%B <branch>`, `git diff --stat <base>...<branch>` — every file is
   explained by the task; the file with check output.
 - Compare with the owner's verbatim words on the case they named, and on edge cases (empty input,
@@ -217,6 +237,9 @@ owner, not from another copy of the same model.
   VERBATIM with date · tasks (done when · files · session · model/effort · branch · state) · what is
   not verified · calibration log. Update after EVERY result — so nothing is lost if the machine goes
   down. Decisions recorded in the file are not asked again.
+  A task is done only when the file says so; after context compaction trust the file and `git log`,
+  not memory. Track each task by sub-state: done → verified → accepted → in batch
+  (superpowers; [agent-engineering-toolkit](https://github.com/rodrigorjsf/agent-engineering-toolkit)).
 - HQ start: check usage, list linked sessions, `git fetch`, read the HQ file.
 - After merge: stop the session's processes → remove its worktree → archive the session (ask the
   owner once per wave).
