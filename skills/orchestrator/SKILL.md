@@ -89,6 +89,20 @@ at each level differs ([Anthropic](https://platform.claude.com/docs/en/build-wit
 [effort](https://platform.claude.com/docs/en/build-with-claude/effort)) — calibrate by your own
 results (§9 calibration log), not by names.
 
+**Don't do extra work — three questions before every task** (maximum quality without wasted
+tokens; no ceiling when the task really needs it):
+1. **Is the task needed at all, and at this size?** What happens if we skip it; the smallest scope
+   that reaches the owner's goal. In doubt → one line in the retell: "we could skip X — agree?".
+2. **Pick model and effort by the cost of an ACCEPTED task, not per token.** A rework costs more than
+   a stronger model, so don't cheapen the hardest tasks (money, data, "already failed once"):
+   "Compare on cost per completed task, not per token"
+   ([Anthropic](https://platform.claude.com/docs/en/about-claude/models/optimizing-for-cost-and-intelligence)).
+3. **When there is an automatic check (tests), start at the table's level and re-run failures one
+   level higher**, instead of running everything at the top (Anthropic: about 40 % cheaper than
+   everything at high, at the same pass rate). No automatic check → use the table's level.
+No separate "judge" agent: it would spend tokens on every task itself. The calibration log (§9)
+shows whether the choices were right.
+
 **Example — calibrate to your models and tasks.** Roles and ordering are the point; tiers and
 levels are a starting guess.
 
@@ -228,7 +242,8 @@ owner, not from another copy of the same model.
   model, what to delete), not for code review. A fan-out workflow is for many uniform checks (30
   pages, 40 files) and takes no human input mid-run.
 - **Calibration log** in the HQ file: one line per task — type · model · effort · tokens · accepted
-  first time or how many reworks. Once a month compare with the §3 table and adjust it.
+  first time or how many reworks · model/effort too much, right or too little · scope fully or
+  partly needed. Once a month compare with the §3 table and adjust it.
 
 ## 10. HQ file, cleanup, handoff
 
